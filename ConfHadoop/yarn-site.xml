@@ -14,7 +14,7 @@
             on which the Applications in the cluster talk to the Resource Manager.
         </description>
     </property>
-
+<!--
         <property>
               <name>yarn.nodemanager.resource.memory-mb</name>
               <value>12000</value>
@@ -28,6 +28,8 @@
                <name>yarn.nodemanager.vmem-pmem-ratio</name>
                <value>2.1</value>
         </property>
+
+-->
     <property>
         <name>yarn.resourcemanager.scheduler.class</name>
         <value>org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler</value>
@@ -99,7 +101,33 @@
         <value>0.0.0.0:30377</value>
         <description>Address of the ResourceManager web app</description>
       </property>
-    
+
+    <property>
+        <name>yarn.scheduler.minimum-allocation-mb</name>
+        <value>512</value>
+    </property>
+
+    <property>
+        <name>yarn.scheduler.maximum-allocation-mb</name>
+        <value>4096</value>
+    </property>
+
+    <!-- 4  GB for a node  -->
+    <property>
+        <name>yarn.nodemanager.resource.memory-mb</name>
+        <value>4096</value>
+    </property>
+
+    <!-- use 3 cores for Hadoop -->
+    <property>
+        <name>yarn.nodemanager.resource.cpu-vcores</name>
+        <value>3</value>
+    </property>
+
+		<property> 
+    	<name>mapreduce.application.classpath</name>
+    	<value>$HADOOP_HOME/share/hadoop/mapreduce/*,$HADOOP_HOME/share/hadoop/mapreduce/lib/*,$HADOOP_HOME/share/hadoop/common/*,$HADOOP_HOME/share/hadoop/common/lib/*,$HADOOP_HOME/share/hadoop/yarn/*,$HADOOP_HOME/share/hadoop/yarn/lib/*,$HADOOP_HOME/share/hadoop/hdfs/*,$HADOOP_HOME/share/hadoop/hdfs/lib/*</value>
+		</property>    
     <!--  Other ports with may be overloaded.  Modify if you see error messages about the defaults already being in use
       <property>
        <name>yarn.resourcemanager.address</name>

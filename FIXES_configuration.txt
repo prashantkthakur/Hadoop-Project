@@ -1,0 +1,37 @@
+Error: Could not find or load main class org.apache.hadoop.mapreduce.v2.app.MRAppMaster
+
+Solution:
+I had the same problem 	and resolved by adding this in mapred-site.xml (so edit your mapreduce.application.classpath property)
+
+<property> 
+    <name>mapreduce.application.classpath</name>
+    <value>$HADOOP_MAPRED_HOME/share/hadoop/mapreduce/*,$HADOOP_MAPRED_HOME/share/hadoop/mapreduce/lib/*,$HADOOP_MAPRED_HOME/share/hadoop/common/*,$HADOOP_MAPRED_HOME/share/hadoop/common/lib/*,$HADOOP_MAPRED_HOME/share/hadoop/yarn/*,$HADOOP_MAPRED_HOME/share/hadoop/yarn/lib/*,$HADOOP_MAPRED_HOME/share/hadoop/hdfs/*,$HADOOP_MAPRED_HOME/share/hadoop/hdfs/lib/*</value>
+</property>
+
+https://stackoverflow.com/questions/50927577/could-not-find-or-load-main-class-org-apache-hadoop-mapreduce-v2-app-mrappmaster
+
+
+----------------------------
+
+ERROR: Application state is completed. FinalApplicationStatus=KILLED. Redirecting to job history server
+[main] INFO  org.apache.hadoop.ipc.Client - Retrying connect to server: 0.0.0.0/0.0.0.0:10020. Already tried 0 time(s); retry policy is RetryUpToMaximumCountWithFixedSleep(maxRetries=10, sleepTime=1000 MILLISECONDS)
+
+Solution:
+
+$HADOOP_HOME/sbin/mr-jobhistory-daemon.sh start historyserver
+
+----------------------------
+
+ERROR: Hadoop runs in safe mode.
+
+Solution:
+
+bin/hadoop dfsadmin -safemode leave
+
+$ New version $ 
+
+hdfs dfsadmin -safemode leave
+
+----------------------------
+
+
