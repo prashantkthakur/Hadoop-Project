@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+}
+
+group 'hadoop-million-songs'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+dependencies {
+    compile group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: '3.1.2'
+    compile group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.1.2'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+
+}
+
+repositories {
+    mavenCentral()
+}
+
+

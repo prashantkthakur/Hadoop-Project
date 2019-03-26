@@ -34,33 +34,4 @@ hdfs dfsadmin -safemode leave
 
 ----------------------------
 
-Error: Job job_1553531613138_0002 failed with state KILLED due to: REDUCE capability required is more than the supported max container capability in the cluster. Killing the Job. reduceResourceRequest: <memory:8192, vCores:1> maxContainerCapability:<memory:4096, vCores:3>Job received Kill while in RUNNING state.
-
-Solution:
-
-The mapred-site.xml has a property to allocate resource to map/reduce jobs which was higher than the yarn max.allocation. 
-
-Commented the line in mapred-site.xml for now.
-
-<!--  
-   <property>
-              <name>mapreduce.map.memory.mb</name>
-              <value>4096</value>
-        </property>
-        <property>
-              <name>mapreduce.reduce.memory.mb</name>
-              <value>8192</value>
-         </property>
-         <property>
-                 <name>mapreduce.map.java.opts</name>
-                 <value>-Xmx6072m</value>
-         </property>
-         <property>
-                  <name>mapreduce.reduce.java.opts</name>
-                   <value>-Xmx6144m</value>
-          </property>
--->
-
--------------------------------
-
 
