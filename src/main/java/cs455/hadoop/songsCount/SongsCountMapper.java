@@ -13,26 +13,28 @@ import java.util.Arrays;
  * Mapper: Reads line by line, retrieve the key from header. Emit <artist_id+artist_name, 1> pairs.
  */
 public class SongsCountMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
-
+    private int artistIdx = 0;
+    private int nameIdx = 0;
+    //       private int songIdx = 0;
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         // Get the header from the csv
-        int artistIdx = 0;
-        int nameIdx = 0;
-//        int songIdx = 0;
-        if (key.get() == 0) {
-            ArrayList<String> header = new ArrayList(Arrays.asList(value.toString().split(",")));
+
+        if (key.get() == 0l) {
+            ArrayList<String> header = new ArrayList(Arrays.asList(value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 0)));
             artistIdx = header.indexOf("artist_id");
             nameIdx = header.indexOf("artist_name");
 //            songIdx = header.indexOf("song_id");
-
         } else {
-            String[] items = value.toString().split(",");
-            String artistId = items[artistIdx];
-            String artistName = items[nameIdx];
+                String[] items = value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 0);
+                String artistId = items[artistIdx].trim();
+                String artistName = items[nameIdx].trim();
+                if (artistId.length() < 1 || artistName.length() < 1)
+                    System.out.println("Mapper error: length less"+ artistId + ": "+artistName);
 //            String songId = value.toString().split(",")[songIdx];
-            // emit word, count pairs.
-            context.write(new Text(artistId +"%" + artistName), new IntWritable(1));
+                // emit word, count pairs.
+                context.write(new Text(artistId + "%%" + artistName), new IntWritable(1));
+
         }
     }
 }

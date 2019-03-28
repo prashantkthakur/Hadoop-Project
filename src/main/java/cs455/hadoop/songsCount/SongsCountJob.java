@@ -18,14 +18,15 @@ public class SongsCountJob {
         try {
             Configuration conf = new Configuration();
             // Give the MapRed job a name. You'll see this name in the Yarn webapp.
-            Job job = Job.getInstance(conf, "word count");
+            Job job = Job.getInstance(conf, "SongCount");
             // Current class.
             job.setJarByClass(SongsCountJob.class);
             // Mapper
             job.setMapperClass(SongsCountMapper.class);
             // Combiner. We use the reducer as the combiner in this case.
-            job.setCombinerClass(SongsCountReducer.class);
+            job.setCombinerClass(SongsCountCombiner.class);
             // Reducer
+            job.setNumReduceTasks(1);
             job.setReducerClass(SongsCountReducer.class);
             // Outputs from the Mapper.
             job.setMapOutputKeyClass(Text.class);

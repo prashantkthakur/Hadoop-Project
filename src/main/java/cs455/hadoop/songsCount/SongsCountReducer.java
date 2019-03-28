@@ -13,25 +13,33 @@ import java.io.IOException;
  */
 
 public class SongsCountReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
-    private int tmpCount = 0;
-    private String topArtist = "";
+    private IntWritable tmpCount = new IntWritable();
+    private Text topArtist = new Text();
+
     @Override
     protected void reduce(Text key, Iterable<IntWritable> values, Context context)
             throws IOException, InterruptedException {
         int count = 0;
-        // calculate the total count
-        for(IntWritable val : values){
-            count += val.get();
-        }
-        if(count > tmpCount) {
-            tmpCount = count;
-            topArtist = key.toString();
-        }
+            // calculate the total count
+            for (IntWritable val : values) {
+                count += val.get();
+            }
+            if (count > tmpCount.get()) {
+                tmpCount.set(count);
+                if (key.toString().contains("%")) {
+                    topArtist.set(key.toString().split("%%")[1]);
+                }
+//                System.out.println(tmpCount+"TOP ARTIST: " + topArtist + " :: " + key);
+//                context.write(topArtist, new IntWritable(tmpCount));
+
+            }
+
+
     }
 
     @Override
     public void cleanup(Context context) throws IOException, InterruptedException {
-        // write the word with the highest frequency
-        context.write(new Text(topArtist.split("%")[1]), new IntWritable(tmpCount));
+        context.write(topArtist, tmpCount);
+
     }
 }

@@ -80,6 +80,10 @@
     </property>
 
     <property>
+ 			<name>yarn.nodemanager.vmem-pmem-ratio</name>
+ 			<value>10</value>
+    </property>
+    <property>
         <name>yarn.scheduler.capacity.root.default.capacity</name>
         <value>100</value>
     </property>

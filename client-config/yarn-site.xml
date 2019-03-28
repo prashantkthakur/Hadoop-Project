@@ -45,4 +45,25 @@
     <description>the host is the hostname of the ResourceManager and the port is the port on
     which the clients can talk to the Resource Manager. </description>
   </property>
+		<property> 
+    	<name>mapreduce.application.classpath</name>
+    	<value>$HADOOP_HOME/share/hadoop/mapreduce/*,$HADOOP_HOME/share/hadoop/mapreduce/lib/*,$HADOOP_HOME/share/hadoop/common/*,$HADOOP_HOME/share/hadoop/common/lib/*,$HADOOP_HOME/share/hadoop/yarn/*,$HADOOP_HOME/share/hadoop/yarn/lib/*,$HADOOP_HOME/share/hadoop/hdfs/*,$HADOOP_HOME/share/hadoop/hdfs/lib/*</value>
+		</property> 
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+        <description>shuffle service that needs to be set for Map Reduce to run </description>
+    </property>
+
+
+    <property>
+      <name>yarn.nodemanager.vmem-pmem-ratio</name>
+      <value>10</value>
+	</property>
+<!--
+	<property>
+    <name>yarn.nodemanager.aux-services.mapreduce_shuffle.class</name>
+    <value>org.apache.hadoop.mapred.ShuffleHandler</value>
+	</property>
+-->
 </configuration>
