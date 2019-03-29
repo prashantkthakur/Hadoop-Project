@@ -16,6 +16,7 @@ import java.util.Arrays;
  */
 public class ArtistMapper extends Mapper<LongWritable, Text, Text, Text> {
     private int nameIdx = 0;
+    private int artistIdx = 0;
     private int songIdx = 0;
 
     @Override
@@ -25,13 +26,15 @@ public class ArtistMapper extends Mapper<LongWritable, Text, Text, Text> {
         if (key.get() == 0l) {
             ArrayList<String> header = new ArrayList(Arrays.asList(value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 0)));
             nameIdx = header.indexOf("artist_name");
+            artistIdx = header.indexOf("artist_id");
             songIdx = header.indexOf("song_id");
         } else {
             String[] items = value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 0);
             String songId = items[songIdx].trim();
             String artistName = items[nameIdx].trim();
+            String artistId = items[artistIdx].trim();
 
-            context.write(new Text(songId), new Text("name\t"+artistName));
+            context.write(new Text(songId), new Text("name#-#"+artistId+"%%"+artistName));
 
         }
     }

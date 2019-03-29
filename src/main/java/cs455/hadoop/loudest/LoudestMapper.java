@@ -28,7 +28,7 @@ public class LoudestMapper extends Mapper<LongWritable, Text, Text, Text> {
             String songId = items[songIdx].trim();
             String loudness = items[loudIdx].trim();
 
-            context.write(new Text(songId), new Text("loudest\t"+loudness));
+            context.write(new Text(songId), new Text("loudest#-#"+loudness));
 
         }
     }
