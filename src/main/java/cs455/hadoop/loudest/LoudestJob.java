@@ -21,15 +21,19 @@ public class LoudestJob {
      * Main class to execute job.
      */
         public static void main(String[] args) {
-            if (args.length < 3 || args.length > 4 ){
-                System.err.println("Number of arguments should be 3.\n" +
-                        "hdfs path for Analysis\t hdfs path for metadata\t hdfs path for output");
+//            if (args.length < 3 || args.length > 4 ){
+//                System.err.println("Number of arguments should be 3.\n" +
+//                        "hdfs path for Analysis\t hdfs path for metadata\t hdfs path for output");
+//        }
             try {
+                System.out.println("Running First Job..");
                 Configuration conf = new Configuration();
                 Job job1 = Job.getInstance(conf, "Initial Loudest-Artist");
                 job1.setJarByClass(LoudestJob.class);
 
                 // MultipleInputs for Mapper. Need to join two data on song_id.
+                // arg0 is /analysis
+                // arg1 is /metadata
                 MultipleInputs.addInputPath(job1, new Path(args[0]),TextInputFormat.class, LoudestMapper.class);
                 MultipleInputs.addInputPath(job1, new Path(args[1]),TextInputFormat.class, ArtistMapper.class);
 
@@ -37,7 +41,7 @@ public class LoudestJob {
 //                job.setCombinerClass(LoudestReducer.class);
 
                 // Reducer
-                job1.setNumReduceTasks(1);
+                job1.setNumReduceTasks(20);
                 job1.setReducerClass(LoudestReducer1.class);
 
                 // Outputs types <key, value> from the Mapper.
@@ -51,9 +55,10 @@ public class LoudestJob {
                 // path to output in HDFS
                 Path intermediatePath = new Path(args[2]+"-intermediate");
                 FileOutputFormat.setOutputPath(job1, intermediatePath);
+                job1.waitForCompletion(true);
 
                 /** Second Job */
-
+                System.out.println("Running second job..");
                 Job job2 = Job.getInstance(conf, "Final Loudest-Artist");
                 job2.setJarByClass(LoudestJob.class);
                 job2.setMapperClass(LoudestArtistMapper.class);
@@ -71,6 +76,5 @@ public class LoudestJob {
             }
 
         }
-    }
-
 }
+
