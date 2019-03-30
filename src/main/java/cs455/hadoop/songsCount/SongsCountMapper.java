@@ -13,8 +13,8 @@ import java.util.Arrays;
  * Mapper: Reads line by line, retrieve the key from header. Emit <artist_id+artist_name, 1> pairs.
  */
 public class SongsCountMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
-    private int artistIdx = 0;
-    private int nameIdx = 0;
+    private static int artistIdx = 0;
+    private static int nameIdx = 0;
     //       private int songIdx = 0;
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {

@@ -21,10 +21,7 @@ public class LoudestJob {
      * Main class to execute job.
      */
         public static void main(String[] args) {
-//            if (args.length < 3 || args.length > 4 ){
-//                System.err.println("Number of arguments should be 3.\n" +
-//                        "hdfs path for Analysis\t hdfs path for metadata\t hdfs path for output");
-//        }
+
             try {
                 System.out.println("Running First Job..");
                 Configuration conf = new Configuration();
@@ -41,8 +38,8 @@ public class LoudestJob {
 //                job.setCombinerClass(LoudestReducer.class);
 
                 // Reducer
-                job1.setNumReduceTasks(20);
-                job1.setReducerClass(LoudestReducer1.class);
+                job1.setNumReduceTasks(5);
+                job1.setReducerClass(LoudestReducer.class);
 
                 // Outputs types <key, value> from the Mapper.
                 job1.setMapOutputKeyClass(Text.class);

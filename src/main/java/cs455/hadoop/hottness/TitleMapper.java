@@ -1,7 +1,6 @@
-package cs455.hadoop.loudest;
+package cs455.hadoop.hottness;
 
-
-import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -10,25 +9,26 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-/**
- * Mapper: Reads line by line, retrieve the key from header. Emit <artist_id+artist_name, 1> pairs.
- */
-public class LoudestMapper extends Mapper<LongWritable, Text, Text, Text> {
+public class TitleMapper extends Mapper<LongWritable, Text, Text, Text> {
+    private static int titleIdx = 0;
     private static int songIdx = 0;
-    private static int loudIdx = 0;
+
     @Override
-    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        // Get the header from the csv
+
+    protected void map(LongWritable key, Text value, Context context)
+            throws IOException, InterruptedException {
+
         if (key.get() == 0l) {
             ArrayList<String> header = new ArrayList(Arrays.asList(value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 0)));
+            titleIdx = header.indexOf("title");
             songIdx = header.indexOf("song_id");
-            loudIdx = header.indexOf("loudness");
         } else {
             String[] items = value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 0);
             String songId = items[songIdx].trim();
-            String loudness = items[loudIdx].trim();
-
-            context.write(new Text(songId), new Text("loudest#-#"+loudness));
+            String title = items[titleIdx].trim();
+            if (songId.length() > 0 && title.length() > 0) {
+                context.write(new Text(songId), new Text("title#-#" + title));
+            }
 
         }
     }

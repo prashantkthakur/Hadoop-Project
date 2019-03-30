@@ -13,7 +13,7 @@ import java.io.IOException;
  *     would work to find artist with highest average loudness.
  */
 
-public class LoudestReducer1 extends Reducer<Text, Text, Text, DoubleWritable> {
+public class LoudestReducer extends Reducer<Text, Text, Text, DoubleWritable> {
 
     @Override
     protected void reduce(Text key, Iterable<Text> values, Context context)
