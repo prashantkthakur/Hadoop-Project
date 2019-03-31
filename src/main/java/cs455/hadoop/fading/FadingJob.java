@@ -1,7 +1,10 @@
-package cs455.hadoop.hottness;
+package cs455.hadoop.fading;
 
 
-import cs455.hadoop.utils.TempFileReadMapper;
+import cs455.hadoop.hottness.HotTitleMapper;
+import cs455.hadoop.hottness.HotTitleReducer;
+import cs455.hadoop.loudest.ArtistMapper;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
@@ -14,9 +17,8 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import java.io.IOException;
 
 
-public class HotJob {
+public class FadingJob {
 
-    // TODO - Remove HotTitleMapper if TempFileReadMapper works....
 
     /**
      * What is the song with the highest hotttnesss (popularity) score
@@ -28,21 +30,21 @@ public class HotJob {
         try {
             System.out.println("Running First Job..");
             Configuration conf = new Configuration();
-            Job job1 = Job.getInstance(conf, "Initial Hot-Song");
-            job1.setJarByClass(HotJob.class);
+            Job job1 = Job.getInstance(conf, "Initial Fading");
+            job1.setJarByClass(FadingJob.class);
 
             // MultipleInputs for Mapper. Need to join two data on song_id.
             // arg0 is /analysis
             // arg1 is /metadata
-            MultipleInputs.addInputPath(job1, new Path(args[0]), TextInputFormat.class, HotMapper.class);
-            MultipleInputs.addInputPath(job1, new Path(args[1]), TextInputFormat.class, TitleMapper.class);
+            MultipleInputs.addInputPath(job1, new Path(args[0]), TextInputFormat.class, FadeTimeMapper.class);
+            MultipleInputs.addInputPath(job1, new Path(args[1]), TextInputFormat.class, ArtistMapper.class);
 
             // Combiner. We use the reducer as the combiner in this case.
 //                job.setCombinerClass(LoudestReducer.class);
 
             // Reducer
-            job1.setNumReduceTasks(5);
-            job1.setReducerClass(HotReducer.class);
+            job1.setNumReduceTasks(10);
+            job1.setReducerClass(FadingReducer.class);
 
             // Outputs types <key, value> from the Mapper.
             job1.setMapOutputKeyClass(Text.class);
@@ -60,9 +62,9 @@ public class HotJob {
             /** Second Job */
 
             System.out.println("Running second job..");
-            Job job2 = Job.getInstance(conf, "Final Hot-Song");
-            job2.setJarByClass(HotJob.class);
-            job2.setMapperClass(TempFileReadMapper.class);
+            Job job2 = Job.getInstance(conf, "Final Fading");
+            job2.setJarByClass(FadingJob.class);
+            job2.setMapperClass(HotTitleMapper.class);
             job2.setReducerClass(HotTitleReducer.class);
             job2.setOutputKeyClass(Text.class);
             job2.setOutputValueClass(DoubleWritable.class);

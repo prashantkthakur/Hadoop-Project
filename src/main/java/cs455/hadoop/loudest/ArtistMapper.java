@@ -1,6 +1,5 @@
 package cs455.hadoop.loudest;
 
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -23,7 +22,7 @@ public class ArtistMapper extends Mapper<LongWritable, Text, Text, Text> {
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         // Get the header from the csv
 
-        if (key.get() == 0l) {
+        if (key.get() == 0l && value.toString().contains("artist_id")) {
             ArrayList<String> header = new ArrayList(Arrays.asList(value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 0)));
             nameIdx = header.indexOf("artist_name");
             artistIdx = header.indexOf("artist_id");
@@ -33,7 +32,7 @@ public class ArtistMapper extends Mapper<LongWritable, Text, Text, Text> {
             String songId = items[songIdx].trim();
             String artistName = items[nameIdx].trim();
             String artistId = items[artistIdx].trim();
-
+//            System.out.println("ArtistMapper:: SongID="+songId +" Artist= "+ artistId+"%%"+artistName);
             context.write(new Text(songId), new Text("name#-#"+artistId+"%%"+artistName));
 
         }

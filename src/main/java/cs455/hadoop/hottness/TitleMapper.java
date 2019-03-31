@@ -18,7 +18,7 @@ public class TitleMapper extends Mapper<LongWritable, Text, Text, Text> {
     protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
 
-        if (key.get() == 0l) {
+        if (key.get() == 0l && value.toString().contains("song_id")) {
             ArrayList<String> header = new ArrayList(Arrays.asList(value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 0)));
             titleIdx = header.indexOf("title");
             songIdx = header.indexOf("song_id");

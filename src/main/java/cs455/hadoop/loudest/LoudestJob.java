@@ -1,5 +1,6 @@
 package cs455.hadoop.loudest;
 
+import cs455.hadoop.utils.TempFileReadMapper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
@@ -14,6 +15,7 @@ import java.io.IOException;
 
 public class LoudestJob {
 
+    // TODO - Remove HotTitleMapper if TempFileReadMapper works....
 
     /**
      * Which artist’s songs are the loudest on average?
@@ -58,7 +60,7 @@ public class LoudestJob {
                 System.out.println("Running second job..");
                 Job job2 = Job.getInstance(conf, "Final Loudest-Artist");
                 job2.setJarByClass(LoudestJob.class);
-                job2.setMapperClass(LoudestArtistMapper.class);
+                job2.setMapperClass(TempFileReadMapper.class);
                 job2.setReducerClass(LoudestArtistReducer.class);
                 job2.setOutputKeyClass(Text.class);
                 job2.setOutputValueClass(DoubleWritable.class);

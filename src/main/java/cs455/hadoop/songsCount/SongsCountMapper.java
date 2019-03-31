@@ -20,7 +20,7 @@ public class SongsCountMapper extends Mapper<LongWritable, Text, Text, IntWritab
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         // Get the header from the csv
 
-        if (key.get() == 0l) {
+        if (key.get() == 0l && value.toString().contains("artist_id")) {
             ArrayList<String> header = new ArrayList(Arrays.asList(value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 0)));
             artistIdx = header.indexOf("artist_id");
             nameIdx = header.indexOf("artist_name");

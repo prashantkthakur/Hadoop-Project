@@ -13,17 +13,18 @@ public class HotMapper extends Mapper<LongWritable, Text, Text, Text> {
     // TODO- Somehow these value are not initialized from header.
     // Solution: The file is large so header is not present in all the chunk so initialized to default value.
     // Made it static so that it is one for the entire class so that it can be reused.
-    private static int hotnessIdx = 2;
-    private static int songIdx = 1;
+    private static int hotnessIdx = 0;
+    private static int songIdx = 0;
 
     @Override
     protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
         int count = 0;
-        if (key.get() == 0l) {
+        if (key.get() == 0l && value.toString().contains("song_id")) {
             ArrayList<String> header = new ArrayList(Arrays.asList(value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 0)));
             hotnessIdx = header.indexOf("song_hotttnesss");
             songIdx = header.indexOf("song_id");
+//            System.out.println("HotMapper:: Header "+ hotnessIdx + " : "+songIdx);
 
         } else {
             String[] items = value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 0);
