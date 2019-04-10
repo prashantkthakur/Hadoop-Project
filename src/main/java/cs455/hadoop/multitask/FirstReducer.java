@@ -52,6 +52,27 @@ public class FirstReducer extends Reducer<Text, Text, Text, Text> {
             String[] tmplist = item.toString().split("%-%");
             int val = Integer.parseInt(tmplist[1]);
             String data = tmplist[0];
+            // Update MaxSimilar - Generic Artists
+            if (val >= maxSimilar) {
+                if (!maxSimilarArtist.containsKey(val)) {
+                    if (maxSimilarArtist.size() > 0) {
+                        int b = maxSimilarArtist.keySet().iterator().next();
+                        if (b < val) {
+                            maxSimilarArtist.remove(b);
+                            ArrayList<String> tmp = new ArrayList<>();
+                            tmp.add(data);
+                            maxSimilarArtist.put(val, tmp);
+                        }
+                    } else {
+                        ArrayList<String> tmp = new ArrayList<>();
+                        tmp.add(data);
+                        maxSimilarArtist.put(val, tmp);
+                    }
+                } else {
+                    maxSimilarArtist.get(val).add(data);
+                    maxSimilarArtist.put(val, maxSimilarArtist.get(val));
+                }
+            }
             if (val <= minSimilar) {
                 if (!minSimilarArtist.containsKey(val)) {
                     if (minSimilarArtist.size() > 0) {
@@ -70,27 +91,6 @@ public class FirstReducer extends Reducer<Text, Text, Text, Text> {
                 } else {
                     minSimilarArtist.get(val).add(data);
                     minSimilarArtist.put(val, minSimilarArtist.get(val));
-                }
-            }
-            // Update MaxSimilar - Generic Artists
-            else if (val >= maxSimilar) {
-                if (!maxSimilarArtist.containsKey(val)) {
-                    if (maxSimilarArtist.size() > 0) {
-                        int b = maxSimilarArtist.keySet().iterator().next();
-                        if (b < val) {
-                            maxSimilarArtist.remove(b);
-                            ArrayList<String> tmp = new ArrayList<>();
-                            tmp.add(data);
-                            maxSimilarArtist.put(val, tmp);
-                        }
-                    } else {
-                        ArrayList<String> tmp = new ArrayList<>();
-                        tmp.add(data);
-                        maxSimilarArtist.put(val, tmp);
-                    }
-                } else {
-                    maxSimilarArtist.get(val).add(data);
-                    maxSimilarArtist.put(val, maxSimilarArtist.get(val));
                 }
             }
         }
@@ -112,7 +112,7 @@ public class FirstReducer extends Reducer<Text, Text, Text, Text> {
 //        String durationSongId = "";
 
         if (key.toString().equals("similar")){
-            System.out.println("Similar received......................................");
+                System.out.println("Similar received......................................");
             updateSimilarArtist(values);
         }
 
@@ -238,14 +238,14 @@ public class FirstReducer extends Reducer<Text, Text, Text, Text> {
         // Hottest song in this batch
         context.write(new Text("hot#-#"+hotSongId + "%%"+songTitle),new Text(String.valueOf(maxHotness)));
 
-        if(minSimilar != Integer.MAX_VALUE) {
+        if(minSimilarArtist.size() >0) {
             int tmpKey = minSimilarArtist.keySet().iterator().next();
             for (String val: minSimilarArtist.get(tmpKey)) {
                 context.write(new Text("similar#-#Most Unique Artist: " + val), new Text(String.valueOf(tmpKey)));
                 System.out.println("Similar Min: "+ val + " "+ tmpKey);
             }
         }
-        if (maxSimilar != Integer.MIN_VALUE) {
+        if (maxSimilarArtist.size() > 0) {
             int tmpKey = maxSimilarArtist.keySet().iterator().next();
             for (String val: maxSimilarArtist.get(tmpKey)) {
                 context.write(new Text("similar#-#Most generic Artist: " + val), new Text(String.valueOf(tmpKey)));

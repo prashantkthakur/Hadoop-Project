@@ -70,6 +70,28 @@ public class MetaDataMapper extends Mapper<LongWritable, Text, Text, Text> {
     }
 
     private void updateSimilarArtist(String data, int val) {
+
+        // Update MaxSimilar - Generic Artists
+        if (val >= maxSimilar){
+            if (!maxSimilarArtist.containsKey(val)) {
+                if (maxSimilarArtist.size() > 0) {
+                    int b = maxSimilarArtist.keySet().iterator().next();
+                    if (b < val) {
+                        maxSimilarArtist.remove(b);
+                        ArrayList<String> tmp = new ArrayList<>();
+                        tmp.add(data);
+                        maxSimilarArtist.put(val, tmp);
+                    }
+                } else {
+                    ArrayList<String> tmp = new ArrayList<>();
+                    tmp.add(data);
+                    maxSimilarArtist.put(val, tmp);
+                }
+            } else {
+                maxSimilarArtist.get(val).add(data);
+                maxSimilarArtist.put(val, maxSimilarArtist.get(val));
+            }
+        }
         // Update MinSimilar - Unique List
         if (val <= minSimilar) {
             if (!minSimilarArtist.containsKey(val)) {
@@ -89,27 +111,6 @@ public class MetaDataMapper extends Mapper<LongWritable, Text, Text, Text> {
             } else {
                 minSimilarArtist.get(val).add(data);
                 minSimilarArtist.put(val, minSimilarArtist.get(val));
-            }
-        }
-        // Update MaxSimilar - Generic Artists
-        else if (val >= maxSimilar){
-            if (!maxSimilarArtist.containsKey(val)) {
-                if (maxSimilarArtist.size() > 0) {
-                    int b = maxSimilarArtist.keySet().iterator().next();
-                    if (b < val) {
-                        maxSimilarArtist.remove(b);
-                        ArrayList<String> tmp = new ArrayList<>();
-                        tmp.add(data);
-                        maxSimilarArtist.put(val, tmp);
-                    }
-                } else {
-                    ArrayList<String> tmp = new ArrayList<>();
-                    tmp.add(data);
-                    maxSimilarArtist.put(val, tmp);
-                }
-            } else {
-                maxSimilarArtist.get(val).add(data);
-                maxSimilarArtist.put(val, maxSimilarArtist.get(val));
             }
         }
 
@@ -135,14 +136,14 @@ public class MetaDataMapper extends Mapper<LongWritable, Text, Text, Text> {
             String title = items[titleIdx].trim();
             String similarArtist = items[similarIdx].trim();
             String[] similarList = similarArtist.split("\\s+");
-
+            System.out.println("Similar array length : "+similarList.length);
             // Aggregate the count of songs for one artist
             String info = artistId + "%%" + artistName;
             updateSongsStat(songId, info);
             updateSimilarArtist(artistName, similarList.length);
 /**
             if (similarList.length >= maxSimilar){
-                maxSimilar = similarList.length;
+                maxSimilar = similarList.length;s
 //                maxSimilarArtist = artistId +"%%"+artistName;
                 maxSimilarArtist.add(artistName + "%-%"+maxSimilar);
                 System.out.println("Similar Max: "+maxSimilarArtist + " " + maxSimilar);
@@ -186,9 +187,9 @@ public class MetaDataMapper extends Mapper<LongWritable, Text, Text, Text> {
         }
         if (maxSimilarArtist.size() > 0) {
             int tmpKey = maxSimilarArtist.keySet().iterator().next();
-            for (String val : maxSimilarArtist.get(tmpKey)) {
-                context.write(new Text("similar"), new Text(val + "%-%" + tmpKey));
-                System.out.println("Similar Max Mapper: " + val + " " + tmpKey);
+            for (String item : maxSimilarArtist.get(tmpKey)) {
+                context.write(new Text("similar"), new Text(item + "%-%" + tmpKey));
+                System.out.println("Similar Max Mapper: " + item + " " + tmpKey);
 
             }
         }
