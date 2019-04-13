@@ -1,5 +1,6 @@
 package cs455.hadoop.multitask;
 
+import cs455.hadoop.utils.MinMaxList;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -28,16 +29,18 @@ import java.util.HashMap;
  *
  */
 public class MetaDataMapper extends Mapper<LongWritable, Text, Text, Text> {
-    private static int songIdx = 8;
-    private static int nameIdx = 7;
-    private static int idIdx = 3;
-    private static int titleIdx = 9;
-    private static int similarIdx = 10;
-    private int maxSimilar = Integer.MIN_VALUE;
-    HashMap<Integer, ArrayList<String>> maxSimilarArtist = new HashMap<>();
-//    private ArrayList<String> maxSimilarArtist = new ArrayList<>();
-    private int minSimilar = Integer.MAX_VALUE;
-    HashMap<Integer, ArrayList<String>> minSimilarArtist = new HashMap<>();
+    private int songIdx = 8;
+    private int nameIdx = 7;
+    private int idIdx = 3;
+    private int titleIdx = 9;
+    private int similarIdx = 10;
+    private MinMaxList artistUniqueness = new MinMaxList(false);
+
+//    private int maxSimilar = Integer.MIN_VALUE;
+//    HashMap<Integer, ArrayList<String>> maxSimilarArtist = new HashMap<>();
+////    private ArrayList<String> maxSimilarArtist = new ArrayList<>();
+//    private int minSimilar = Integer.MAX_VALUE;
+//    HashMap<Integer, ArrayList<String>> minSimilarArtist = new HashMap<>();
 //    private ArrayList<String> minSimilarArtist = new ArrayList<>();
 
 
@@ -69,52 +72,53 @@ public class MetaDataMapper extends Mapper<LongWritable, Text, Text, Text> {
         }
     }
 
-    private void updateSimilarArtist(String data, int val) {
-
-        // Update MaxSimilar - Generic Artists
-        if (val >= maxSimilar){
-            if (!maxSimilarArtist.containsKey(val)) {
-                if (maxSimilarArtist.size() > 0) {
-                    int b = maxSimilarArtist.keySet().iterator().next();
-                    if (b < val) {
-                        maxSimilarArtist.remove(b);
-                        ArrayList<String> tmp = new ArrayList<>();
-                        tmp.add(data);
-                        maxSimilarArtist.put(val, tmp);
-                    }
-                } else {
-                    ArrayList<String> tmp = new ArrayList<>();
-                    tmp.add(data);
-                    maxSimilarArtist.put(val, tmp);
-                }
-            } else {
-                maxSimilarArtist.get(val).add(data);
-                maxSimilarArtist.put(val, maxSimilarArtist.get(val));
-            }
-        }
-        // Update MinSimilar - Unique List
-        if (val <= minSimilar) {
-            if (!minSimilarArtist.containsKey(val)) {
-                if (minSimilarArtist.size() > 0) {
-                    int b = minSimilarArtist.keySet().iterator().next();
-                    if (b > val) {
-                        minSimilarArtist.remove(b);
-                        ArrayList<String> tmp = new ArrayList<>();
-                        tmp.add(data);
-                        minSimilarArtist.put(val, tmp);
-                    }
-                } else {
-                    ArrayList<String> tmp = new ArrayList<>();
-                    tmp.add(data);
-                    minSimilarArtist.put(val, tmp);
-                }
-            } else {
-                minSimilarArtist.get(val).add(data);
-                minSimilarArtist.put(val, minSimilarArtist.get(val));
-            }
-        }
-
-    }
+    // Refactoring - Delegating task to another class.
+//    private void updateSimilarArtist(String data, int val) {
+//
+//        // Update MaxSimilar - Generic Artists
+//        if (val >= maxSimilar){
+//            if (!maxSimilarArtist.containsKey(val)) {
+//                if (maxSimilarArtist.size() > 0) {
+//                    int b = maxSimilarArtist.keySet().iterator().next();
+//                    if (b < val) {
+//                        maxSimilarArtist.remove(b);
+//                        ArrayList<String> tmp = new ArrayList<>();
+//                        tmp.add(data);
+//                        maxSimilarArtist.put(val, tmp);
+//                    }
+//                } else {
+//                    ArrayList<String> tmp = new ArrayList<>();
+//                    tmp.add(data);
+//                    maxSimilarArtist.put(val, tmp);
+//                }
+//            } else {
+//                maxSimilarArtist.get(val).add(data);
+//                maxSimilarArtist.put(val, maxSimilarArtist.get(val));
+//            }
+//        }
+//        // Update MinSimilar - Unique List
+//        if (val <= minSimilar) {
+//            if (!minSimilarArtist.containsKey(val)) {
+//                if (minSimilarArtist.size() > 0) {
+//                    int b = minSimilarArtist.keySet().iterator().next();
+//                    if (b > val) {
+//                        minSimilarArtist.remove(b);
+//                        ArrayList<String> tmp = new ArrayList<>();
+//                        tmp.add(data);
+//                        minSimilarArtist.put(val, tmp);
+//                    }
+//                } else {
+//                    ArrayList<String> tmp = new ArrayList<>();
+//                    tmp.add(data);
+//                    minSimilarArtist.put(val, tmp);
+//                }
+//            } else {
+//                minSimilarArtist.get(val).add(data);
+//                minSimilarArtist.put(val, minSimilarArtist.get(val));
+//            }
+//        }
+//
+//    }
 
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -136,25 +140,25 @@ public class MetaDataMapper extends Mapper<LongWritable, Text, Text, Text> {
             String title = items[titleIdx].trim();
             String similarArtist = items[similarIdx].trim();
             String[] similarList = similarArtist.split("\\s+");
-            System.out.println("Similar array length : "+similarList.length);
             // Aggregate the count of songs for one artist
             String info = artistId + "%%" + artistName;
             updateSongsStat(songId, info);
-            updateSimilarArtist(artistName, similarList.length);
-/**
-            if (similarList.length >= maxSimilar){
-                maxSimilar = similarList.length;s
-//                maxSimilarArtist = artistId +"%%"+artistName;
-                maxSimilarArtist.add(artistName + "%-%"+maxSimilar);
-                System.out.println("Similar Max: "+maxSimilarArtist + " " + maxSimilar);
-            }else if(similarList.length <= minSimilar){
-                minSimilar = similarList.length;
-//                minSimilarArtist = artistId + "%%" + artistName;
-                minSimilarArtist.add(artistName+"%-%"+minSimilar);
-                System.out.println("Similar Min: "+minSimilarArtist + " " + minSimilar);
+            artistUniqueness.updateSimilar(artistName, similarList.length);
+// Old Code
 
-            }
- */
+//            if (similarList.length >= maxSimilar){
+//                maxSimilar = similarList.length;s
+////                maxSimilarArtist = artistId +"%%"+artistName;
+//                maxSimilarArtist.add(artistName + "%-%"+maxSimilar);
+//                System.out.println("Similar Max: "+maxSimilarArtist + " " + maxSimilar);
+//            }else if(similarList.length <= minSimilar){
+//                minSimilar = similarList.length;
+////                minSimilarArtist = artistId + "%%" + artistName;
+//                minSimilarArtist.add(artistName+"%-%"+minSimilar);
+//                System.out.println("Similar Min: "+minSimilarArtist + " " + minSimilar);
+//
+//            }
+//
             // Send artist name. Artist name are not unique so added artist_id with it.
             // Needed for :-  loudest song, fading,
             context.write(new Text(songId), new Text("name#-#"+info));
@@ -177,22 +181,25 @@ public class MetaDataMapper extends Mapper<LongWritable, Text, Text, Text> {
 //            context.write(new Text(songStat.get(artistId).getSongId()), new Text(outVal));
             context.write(new Text(artistId), new Text(outVal));
         }
-        if (minSimilarArtist.size() > 0) {
-            int tmpKey = minSimilarArtist.keySet().iterator().next();
-            for (String val : minSimilarArtist.get(tmpKey)) {
-                context.write(new Text("similar"), new Text(val + "%-%" + tmpKey));
-                System.out.println("Similar Min Mapper: " + val + " " + tmpKey);
-
-            }
-        }
-        if (maxSimilarArtist.size() > 0) {
-            int tmpKey = maxSimilarArtist.keySet().iterator().next();
-            for (String item : maxSimilarArtist.get(tmpKey)) {
-                context.write(new Text("similar"), new Text(item + "%-%" + tmpKey));
-                System.out.println("Similar Max Mapper: " + item + " " + tmpKey);
-
-            }
-        }
+//        HashMap<Double, ArrayList<String>> minUniqueness = artistUniqueness.getMinSimilarArtist();
+//        if (minUniqueness.size() > 0) {
+//            double tmpKey = minUniqueness.keySet().iterator().next();
+//            for (String artist : minUniqueness.get(tmpKey)) {
+//                context.write(new Text("similar"), new Text(artist + "%-%" + tmpKey));
+//                System.out.println("Similar Min Mapper: " + artist + " " + tmpKey);
+//
+//            }
+//        }
+//        HashMap<Double, ArrayList<String>> maxUniqueness = artistUniqueness.getMaxSimilarArtist();
+//        if (maxUniqueness.size() > 0) {
+//            double tmpKey = maxUniqueness.keySet().iterator().next();
+//            for (String artist : maxUniqueness.get(tmpKey)) {
+//                context.write(new Text("similar"), new Text(artist + "%-%" + tmpKey));
+//                System.out.println("Similar Max Mapper: " + artist + " " + tmpKey);
+//
+//            }
+//        }
+        artistUniqueness.sendFromMapperContext(context, "similar");
 
     }
 }

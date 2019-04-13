@@ -1,5 +1,6 @@
 package cs455.hadoop.multitask;
 
+import cs455.hadoop.utils.MinMaxList;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -7,6 +8,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 /** Index of header
  * 0 Item:
@@ -55,6 +57,8 @@ public class AnalysisMapper extends Mapper<LongWritable, Text, Text, Text> {
     private static int hotIdx = 2;
 
     private double totalFading;
+
+    private MinMaxList songHottness = new MinMaxList(true);
 
 
 
@@ -105,7 +109,9 @@ public class AnalysisMapper extends Mapper<LongWritable, Text, Text, Text> {
 
             // Send hottness information.
             if (songId.length() > 0 && hotness.length() > 0) {
-                context.write(new Text(songId), new Text("hot#-#" + hotness));
+                System.out.println("Hottest: "+songId + " "+hotness);
+                songHottness.updateSimilar(songId, Double.parseDouble(hotness));
+//                context.write(new Text(songId), new Text("hot#-#" + hotness));
             }
 
             // Remove unrated songs from being processed.
@@ -114,5 +120,11 @@ public class AnalysisMapper extends Mapper<LongWritable, Text, Text, Text> {
             }
 
         }
+    }
+    // Don't need as songId is unique in the data
+    @Override
+    protected void cleanup(Context context) throws IOException, InterruptedException {
+        songHottness.sendFromMapperContext(context, "hot");
+
     }
 }

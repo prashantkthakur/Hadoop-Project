@@ -1,6 +1,7 @@
 package cs455.hadoop.multitask;
 
 import cs455.hadoop.utils.DoubleComparator;
+import cs455.hadoop.utils.MinMaxList;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
@@ -30,6 +31,9 @@ public class SecondReducer extends Reducer<Text, Text, Text, Text> {
     private PriorityQueue<String> energySongs = new PriorityQueue<>(10, customComparator);
     private PriorityQueue<String> danceSongs = new PriorityQueue<>(10, customComparator);
     private double maxDanceable = Double.MIN_VALUE;
+
+
+    private MinMaxList finalHotness = new MinMaxList(true);
 
 
     private void addToList(double length, String title) {
@@ -84,11 +88,12 @@ public class SecondReducer extends Reducer<Text, Text, Text, Text> {
                 String[] items = val.toString().split("%-%");
                 hotness = Double.parseDouble(items[1]);
                 hotTitle = items[0].split("%%")[1];
-                if (hotness > maxHot) {
-                    maxHot = hotness;
-                    maxHotSong = hotTitle;
-                    System.out.println("SecondReducer:: Hot title= " + hotTitle + "  Value= " + hotness);
-                }
+                finalHotness.updateSimilar(hotTitle, hotness);
+//                if (hotness > maxHot) {
+//                    maxHot = hotness;
+//                    maxHotSong = hotTitle;
+//                    System.out.println("SecondReducer:: Hot title= " + hotTitle + "  Value= " + hotness);
+//                }
             }
         }
 
@@ -182,8 +187,12 @@ public class SecondReducer extends Reducer<Text, Text, Text, Text> {
         // Compute songs count.
         context.write(new Text("Artist with the most songs in the dataset: "),
                 new Text(mostSongArtist + "  "+String.valueOf(maxCount)+"\n"));
-        context.write(new Text("Hottest Song :"),new Text(maxHotSong + " "+maxHot +"\n"));
-        context.write(new Text("Artist with the highest total time spent Fading :"),
+        context.write(new Text("\nHottest Song :"),new Text("\n-----------------------------\n"));
+
+        finalHotness.dumpReducer(context, finalHotness.getMaxMap(), "Hottest Song: ");
+//        context.write(new Text("Hottest Song :"),new Text(maxHotSong + " "+maxHot +"\n"));
+
+        context.write(new Text("\nArtist with the highest total time spent Fading :"),
                 new Text(maxFadingSong + " " + maxFading +"\n"));
 
         context.write(new Text("Top 10 danceable songs"),new Text("\n----------------------------\n"));

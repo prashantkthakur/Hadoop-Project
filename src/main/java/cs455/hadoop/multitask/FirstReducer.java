@@ -1,12 +1,12 @@
 package cs455.hadoop.multitask;
 
 import cs455.hadoop.utils.DoubleComparator;
+import cs455.hadoop.utils.MinMaxList;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
+
 import java.util.PriorityQueue;
 
 public class FirstReducer extends Reducer<Text, Text, Text, Text> {
@@ -21,18 +21,14 @@ public class FirstReducer extends Reducer<Text, Text, Text, Text> {
     private PriorityQueue<String> danceSongs = new PriorityQueue<>(10, customComparator);
     private double maxDanceable;
     private double maxEnergy;
-    private double maxHotness = Double.MIN_VALUE;
-    private String hotSongId = "";
+//    private double maxHotness = Double.MIN_VALUE;
+//    private String hotSongId = "";
     private String songTitle = "";
 //    private double maxLoudest = Double.MIN_VALUE;
 //    private String maxLoudArtist = "";
 
-    private int minSimilar = Integer.MAX_VALUE;
-    private int maxSimilar = Integer.MIN_VALUE;
-    private HashMap<Integer, ArrayList<String>> maxSimilarArtist = new HashMap<>();
-    //    private ArrayList<String> maxSimilarArtist = new ArrayList<>();
-    private HashMap<Integer, ArrayList<String>> minSimilarArtist = new HashMap<>();
-
+    private MinMaxList artistUniqueness = new MinMaxList(false);
+    private MinMaxList songHottness = new MinMaxList(true);
 
 
 
@@ -43,57 +39,57 @@ public class FirstReducer extends Reducer<Text, Text, Text, Text> {
             System.out.println("DanceReducer:: Size= "+queue.size()+" higher Poll queue= "+queue.peek());
         queue.poll();
     }
-
-    private void updateSimilarArtist(Iterable<Text> values) {
-        // Update MinSimilar - Unique List
-        for (Text item: values) {
-            String[] tmplist = item.toString().split("%-%");
-            int val = Integer.parseInt(tmplist[1]);
-            String data = tmplist[0];
-            // Update MaxSimilar - Generic Artists
-            if (val >= maxSimilar) {
-                if (!maxSimilarArtist.containsKey(val)) {
-                    if (maxSimilarArtist.size() > 0) {
-                        int b = maxSimilarArtist.keySet().iterator().next();
-                        if (b < val) {
-                            maxSimilarArtist.remove(b);
-                            ArrayList<String> tmp = new ArrayList<>();
-                            tmp.add(data);
-                            maxSimilarArtist.put(val, tmp);
-                        }
-                    } else {
-                        ArrayList<String> tmp = new ArrayList<>();
-                        tmp.add(data);
-                        maxSimilarArtist.put(val, tmp);
-                    }
-                } else {
-                    maxSimilarArtist.get(val).add(data);
-                    maxSimilarArtist.put(val, maxSimilarArtist.get(val));
-                }
-            }
-            if (val <= minSimilar) {
-                if (!minSimilarArtist.containsKey(val)) {
-                    if (minSimilarArtist.size() > 0) {
-                        int b = minSimilarArtist.keySet().iterator().next();
-                        if (b > val) {
-                            minSimilarArtist.remove(b);
-                            ArrayList<String> tmp = new ArrayList<>();
-                            tmp.add(data);
-                            minSimilarArtist.put(val, tmp);
-                        }
-                    } else {
-                        ArrayList<String> tmp = new ArrayList<>();
-                        tmp.add(data);
-                        minSimilarArtist.put(val, tmp);
-                    }
-                } else {
-                    minSimilarArtist.get(val).add(data);
-                    minSimilarArtist.put(val, minSimilarArtist.get(val));
-                }
-            }
-        }
-
-    }
+// Refactoring - delegating task to another class
+//    private void updateSimilarArtist(Iterable<Text> values) {
+//        // Update MinSimilar - Unique List
+//        for (Text item: values) {
+//            String[] tmplist = item.toString().split("%-%");
+//            int val = Integer.parseInt(tmplist[1]);
+//            String data = tmplist[0];
+//            // Update MaxSimilar - Generic Artists
+//            if (val >= maxSimilar) {
+//                if (!maxSimilarArtist.containsKey(val)) {
+//                    if (maxSimilarArtist.size() > 0) {
+//                        int b = maxSimilarArtist.keySet().iterator().next();
+//                        if (b < val) {
+//                            maxSimilarArtist.remove(b);
+//                            ArrayList<String> tmp = new ArrayList<>();
+//                            tmp.add(data);
+//                            maxSimilarArtist.put(val, tmp);
+//                        }
+//                    } else {
+//                        ArrayList<String> tmp = new ArrayList<>();
+//                        tmp.add(data);
+//                        maxSimilarArtist.put(val, tmp);
+//                    }
+//                } else {
+//                    maxSimilarArtist.get(val).add(data);
+//                    maxSimilarArtist.put(val, maxSimilarArtist.get(val));
+//                }
+//            }
+//            if (val <= minSimilar) {
+//                if (!minSimilarArtist.containsKey(val)) {
+//                    if (minSimilarArtist.size() > 0) {
+//                        int b = minSimilarArtist.keySet().iterator().next();
+//                        if (b > val) {
+//                            minSimilarArtist.remove(b);
+//                            ArrayList<String> tmp = new ArrayList<>();
+//                            tmp.add(data);
+//                            minSimilarArtist.put(val, tmp);
+//                        }
+//                    } else {
+//                        ArrayList<String> tmp = new ArrayList<>();
+//                        tmp.add(data);
+//                        minSimilarArtist.put(val, tmp);
+//                    }
+//                } else {
+//                    minSimilarArtist.get(val).add(data);
+//                    minSimilarArtist.put(val, minSimilarArtist.get(val));
+//                }
+//            }
+//        }
+//
+//    }
 
     @Override
     protected void reduce(Text key, Iterable<Text> values, Context context)
@@ -105,13 +101,19 @@ public class FirstReducer extends Reducer<Text, Text, Text, Text> {
         double loudness = Double.MIN_VALUE;
         double dance = 0.0;
         double energy = 0.0;
+        double hotness = 0.0;
 
         String duration = "";
 //        String durationSongId = "";
 
         if (key.toString().equals("similar")){
 //                System.out.println("Similar received......................................");
-            updateSimilarArtist(values);
+            // Key="similar"; values = ["artistName%-%uniqNum", "artistName2%-%uniqNum", ...]
+            for (Text val: values) {
+                String[] items = val.toString().split("%-%");
+                System.out.println("similar FirstReducer : "+items[0] + " "+items[1]);
+                artistUniqueness.updateSimilar(items[0], Double.parseDouble(items[1]));
+            }
         }
 
         for (Text val : values) {
@@ -155,11 +157,11 @@ public class FirstReducer extends Reducer<Text, Text, Text, Text> {
 
             } else if (items[0].equals("hot")) {
                 // hotness information
-                double hotness = Double.parseDouble(items[1]);
-                if (hotness > maxHotness){
-                    maxHotness = hotness;
-                    hotSongId = key.toString();
-                }
+                hotness = Double.parseDouble(items[1]);
+//                if (hotness > maxHotness){
+//                    maxHotness = hotness;
+//                    hotSongId = key.toString();
+//                }
 
 
 
@@ -177,6 +179,8 @@ public class FirstReducer extends Reducer<Text, Text, Text, Text> {
         // End of iteration on values.
 
         // Process the value set during the iterations.
+        // Start hotness:  key passed is songId
+        songHottness.updateSimilar(key.toString() + "%%"+songTitle, hotness);
 
         // Start of fading
         if (fading > maxFade && artistInfo.length() > 0) {
@@ -234,22 +238,26 @@ public class FirstReducer extends Reducer<Text, Text, Text, Text> {
             context.write(new Text("energy#-#"+tmp[0]),new Text(tmp[1]));
         }
         // Hottest song in this batch
-        context.write(new Text("hot#-#"+hotSongId + "%%"+songTitle),new Text(String.valueOf(maxHotness)));
-
-        if(minSimilarArtist.size() >0) {
-            int tmpKey = minSimilarArtist.keySet().iterator().next();
-            for (String val: minSimilarArtist.get(tmpKey)) {
-                context.write(new Text("similar#-#Most Unique Artist: " + val), new Text(String.valueOf(tmpKey)));
-                System.out.println("Similar Min: "+ val + " "+ tmpKey);
-            }
-        }
-        if (maxSimilarArtist.size() > 0) {
-            int tmpKey = maxSimilarArtist.keySet().iterator().next();
-            for (String val: maxSimilarArtist.get(tmpKey)) {
-                context.write(new Text("similar#-#Most generic Artist: " + val), new Text(String.valueOf(tmpKey)));
-                System.out.println("Similar Max: "+ val + " "+ tmpKey);
-            }
-        }
+//        context.write(new Text("hot#-#"+hotSongId + "%%"+songTitle),new Text(String.valueOf(maxHotness)));
+        songHottness.sendToReducerContext(context, "hot");
+        artistUniqueness.sendToReducerContext(context,"similar");
+//        // Uniqueness - Generic artist
+//        HashMap<Double, ArrayList<String>> minUniqueness = artistUniqueness.getMinSimilarMap();
+//        if(minUniqueness.size() >0) {
+//            double tmpKey = minUniqueness.keySet().iterator().next();
+//            for (String val: minUniqueness.get(tmpKey)) {
+//                context.write(new Text("similar#-#Most Unique Artist: " + val), new Text(String.valueOf(tmpKey)));
+//                System.out.println("Similar Min: "+ val + " "+ tmpKey);
+//            }
+//        }
+//        HashMap<Double, ArrayList<String>> maxUniqueness = artistUniqueness.getMaxSimilarArtist();
+//        if (maxUniqueness.size() > 0) {
+//            double tmpKey = maxUniqueness.keySet().iterator().next();
+//            for (String val: maxUniqueness.get(tmpKey)) {
+//                context.write(new Text("similar#-#Most generic Artist: " + val), new Text(String.valueOf(tmpKey)));
+//                System.out.println("Similar Max: "+ val + " "+ tmpKey);
+//            }
+//        }
 
 
     }
