@@ -1,8 +1,6 @@
 package cs455.hadoop.multitask;
 
 import cs455.hadoop.utils.DoubleComparator;
-import org.apache.hadoop.io.DoubleWritable;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
@@ -31,9 +29,9 @@ public class FirstReducer extends Reducer<Text, Text, Text, Text> {
 
     private int minSimilar = Integer.MAX_VALUE;
     private int maxSimilar = Integer.MIN_VALUE;
-    HashMap<Integer, ArrayList<String>> maxSimilarArtist = new HashMap<>();
+    private HashMap<Integer, ArrayList<String>> maxSimilarArtist = new HashMap<>();
     //    private ArrayList<String> maxSimilarArtist = new ArrayList<>();
-    HashMap<Integer, ArrayList<String>> minSimilarArtist = new HashMap<>();
+    private HashMap<Integer, ArrayList<String>> minSimilarArtist = new HashMap<>();
 
 
 
@@ -112,7 +110,7 @@ public class FirstReducer extends Reducer<Text, Text, Text, Text> {
 //        String durationSongId = "";
 
         if (key.toString().equals("similar")){
-                System.out.println("Similar received......................................");
+//                System.out.println("Similar received......................................");
             updateSimilarArtist(values);
         }
 
