@@ -1,4 +1,4 @@
-package cs455.hadoop.avgtask;
+package cs455.hadoop.Job10;
 
 
 import org.apache.hadoop.io.LongWritable;
@@ -34,6 +34,7 @@ public class MetaDataReader extends Mapper<LongWritable, Text, Text, Text> {
     private int familiarityIdx = 1;
     private int hotIdx = 2;
     private int yearIdx = 14;
+    private int longitudeIdx = 5;
 
 
     @Override
@@ -53,9 +54,11 @@ public class MetaDataReader extends Mapper<LongWritable, Text, Text, Text> {
                 String songId = items[songIdx].trim();
                 double artistHot = Double.parseDouble(items[hotIdx].trim());
                 int year = Integer.parseInt(items[yearIdx].trim());
+                String longitude = items[longitudeIdx].trim();
                 double artistfamiliar = Double.parseDouble(items[familiarityIdx].trim());
                 if (year > 1000 && artistHot > 0.0 && artistfamiliar > 0.0)
-                    context.write(new Text(songId), new Text("meta#-#" + artistfamiliar + "," + artistHot + "," + year));
+                    context.write(new Text(songId), new Text("meta#-#" + artistfamiliar + "," + artistHot + "," +
+                            year+","+longitude));
             }catch (Exception e){
                 System.err.println("Error reading metadata for data prepration.");
             }

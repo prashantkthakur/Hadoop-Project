@@ -1,6 +1,6 @@
-package cs455.hadoop.avgtask;
+package cs455.hadoop.combined;
 
-import cs455.hadoop.Job10.MetaDataReader;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
@@ -15,7 +15,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
 
-public class AvgJob {
+public class CombinedJob {
 
     public static void main(String[] args) {
 
@@ -27,20 +27,20 @@ public class AvgJob {
 //            }
             Configuration conf = new Configuration();
             Job job1 = Job.getInstance(conf);
-            job1.setJarByClass(AvgJob.class);
+            job1.setJarByClass(CombinedJob.class);
 
             // MultipleInputs for Mapper. Need to join two data on song_id.
             // arg0 is /analysis
             // arg1 is /metadata
-            FileInputFormat.addInputPath(job1, new Path(args[0]));
-            job1.setMapperClass(AvgAnalysisMapper.class);
-//            MultipleInputs.addInputPath(job1, new Path(args[0]), TextInputFormat.class, AvgAnalysisMapper.class);
-//            MultipleInputs.addInputPath(job1, new Path(args[1]), TextInputFormat.class, MetaDataReader.class);
+//            FileInputFormat.addInputPath(job1, new Path(args[0]));
+//            job1.setMapperClass(AvgAnalysisMapper.class);
+            MultipleInputs.addInputPath(job1, new Path(args[0]), TextInputFormat.class, CombinedAnalysisReader.class);
+            MultipleInputs.addInputPath(job1, new Path(args[1]), TextInputFormat.class, CombinedMetaDataReader.class);
 
 
             // Reducer
             job1.setNumReduceTasks(1);
-            job1.setReducerClass(AvgReducer.class);
+            job1.setReducerClass(CombinedReducer.class);
 
             // Outputs types <key, value> from the Mapper.
             job1.setMapOutputKeyClass(Text.class);
@@ -51,12 +51,12 @@ public class AvgJob {
             job1.setOutputValueClass(Text.class);
 
             // Remove part-r-0000X file while using MultipleOutputs.
-//            LazyOutputFormat.setOutputFormatClass(job1, TextOutputFormat.class);
+            LazyOutputFormat.setOutputFormatClass(job1, TextOutputFormat.class);
 
             // path to output in HDFS
-//            MultipleOutputs.addNamedOutput(job1, "data", TextOutputFormat.class, Text.class, Text.class);
-//            MultipleOutputs.addNamedOutput(job1, "avg", TextOutputFormat.class, Text.class, Text.class);
-            FileOutputFormat.setOutputPath(job1, new Path(args[1]));
+            MultipleOutputs.addNamedOutput(job1, "data", TextOutputFormat.class, Text.class, Text.class);
+            MultipleOutputs.addNamedOutput(job1, "avg", TextOutputFormat.class, Text.class, Text.class);
+            FileOutputFormat.setOutputPath(job1, new Path(args[2]));
 
 
 

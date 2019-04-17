@@ -1,14 +1,13 @@
-package cs455.hadoop.avgtask;
-
+package cs455.hadoop.combined;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.stream.Collectors;
-
-public class AvgReducer  extends Reducer<Text, Text, Text, Text> {
+public class CombinedReducer extends Reducer<Text, Text, Text, Text> {
     private double startTime;
 
     private int songKey, timeSig, mode;
@@ -32,6 +31,17 @@ public class AvgReducer  extends Reducer<Text, Text, Text, Text> {
         }
     }
 
+    MultipleOutputs<Text, Text> mos;
+
+    @Override
+    public void setup(Context context) throws IOException,InterruptedException{
+        mos = new MultipleOutputs(context);
+        //outHotness+","+outDurationTime+","+endTime+","+outSongKey+","+outLoudness+","+outMode+
+        // ","+outStartFade + ","+outTempo
+        String header = "artist_familiarity,artist_hotttnesss,year,artist_longitude,song_hotttnesss,duration,end_of_fade_in,key," +
+                "loudness,mode,start_of_fade_out,tempo,popularity";
+        mos.write("data", new Text(header), null);
+    }
 
     @Override
     protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
@@ -96,37 +106,54 @@ public class AvgReducer  extends Reducer<Text, Text, Text, Text> {
 
                 }
             }
-        }
+        } else {
+            // SongId received as key.
+            String analysis = "";
+            String meta = "";
+            for (Text val : values) {
+                String[] items = val.toString().split("#-#");
+                if (items[0].equals("analysis")) {
+                    analysis = items[1];
+                }
+                if (items[0].equals("meta")) {
+                    meta = items[1];
+                }
+            }
+            if (meta.length() > 0 && analysis.length() > 0) {
+                String outVal = meta + "," + analysis;
+                mos.write("data", new Text(outVal), null);
+            }
 
+        }
     }
 
     @Override
     protected void cleanup(Context context) throws IOException, InterruptedException {
-        context.write(new Text("Average Song: "), new Text("\n--------------------------\n"));
-        context.write(new Text("Start Time = "), new Text(String.valueOf(startTime/counter)));
-        context.write(new Text("Total Songs = "), new Text(String.valueOf(counter)));
+        mos.write("avg", new Text("Average Song: "), new Text("\n--------------------------\n"));
+        mos.write("avg", new Text("Start Time = "), new Text(String.valueOf(startTime/counter)));
+        mos.write("avg", new Text("Total Songs = "), new Text(String.valueOf(counter)));
 
         String tmp = resultPitch.stream().map(v -> v/counter).map(Object::toString)
                 .collect(Collectors.joining(" "));
-        context.write(new Text("Pitch = "), new Text(tmp));
+        mos.write("avg", new Text("Pitch = "), new Text(tmp));
         tmp = resultPitch.stream().map(Object::toString)
                 .collect(Collectors.joining(" "));
-        context.write(new Text("Original Pitch = "), new Text(tmp));
+        mos.write("avg", new Text("Original Pitch = "), new Text(tmp));
         tmp = resultTimber.stream().map(v -> v/counter).map(Object::toString)
                 .collect(Collectors.joining(" "));
-        context.write(new Text("Timber = "), new Text(tmp));
+        mos.write("avg", new Text("Timber = "), new Text(tmp));
 
         tmp = resultMaxLoudness.stream().map(v -> v/counter).map(Object::toString)
                 .collect(Collectors.joining(" "));
-        context.write( new Text("Max Loudness = "), new Text(tmp));
+        mos.write("avg", new Text("Max Loudness = "), new Text(tmp));
 
         tmp = resultMaxLoudnessTime.stream().map(v -> v/counter).map(Object::toString)
                 .collect(Collectors.joining(" "));
-        context.write(new Text("Max Loudness Time = "), new Text(tmp));
+        mos.write("avg", new Text("Max Loudness Time = "), new Text(tmp));
 
         tmp = resultStartLoudness.stream().map(v -> v/counter).map(Object::toString)
                 .collect(Collectors.joining(" "));
-        context.write(new Text("Start Loudness = "), new Text(tmp));
+        mos.write("avg", new Text("Start Loudness = "), new Text(tmp));
 
         // Write out fake-hot
         String alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; //9
@@ -135,9 +162,10 @@ public class AvgReducer  extends Reducer<Text, Text, Text, Text> {
         for (int i=0; i<17; i++)
             songId += alphabet.charAt(r.nextInt(alphabet.length()));
         String artistName = "Prashant Thakur";
-        context.write(new Text("\nFake Hot: "+songId +","+artistName),
+        mos.write("avg", new Text("\nFake Hot: "+songId +","+artistName),
                 new Text(tempo + ","+timeSig+","+dance + "," +duration+","+ mode +","+
-                                energy + "," + songKey + "," +loudness+","+stopFade+","+startFade));
+                        energy + "," + songKey + "," +loudness+","+stopFade+","+startFade));
 
+        mos.close();
     }
 }
