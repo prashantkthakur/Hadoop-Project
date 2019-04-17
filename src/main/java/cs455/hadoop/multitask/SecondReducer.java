@@ -15,8 +15,8 @@ public class SecondReducer extends Reducer<Text, Text, Text, Text> {
 
     private int maxCount = Integer.MIN_VALUE;
     private String mostSongArtist = "";
-    private double maxHot = Double.MIN_VALUE;
-    private String maxHotSong = "";
+//    private double maxHot = Double.MIN_VALUE;
+//    private String maxHotSong = "";
     private double maxFading = Double.MIN_VALUE;
     private String maxFadingSong = "";
     private double maxLength = Double.MIN_VALUE;

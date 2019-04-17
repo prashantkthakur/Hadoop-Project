@@ -8,7 +8,6 @@ import org.apache.hadoop.mapreduce.Mapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 
 /** Index of header
  * 0 Item:

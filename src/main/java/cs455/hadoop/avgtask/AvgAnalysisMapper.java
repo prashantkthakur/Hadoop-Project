@@ -53,27 +53,45 @@ import java.util.stream.Collectors;
 
 public class AvgAnalysisMapper extends Mapper<LongWritable, Text, Text, Text> {
 
+    private int songIdx = 1;
+    private int endFadeIdx = 6;
+
+
     private int startTimeIdx = 6;
     private int pitchIdx = 20;
     private int timberIdx = 21;
     private int maxLoudnessIdx = 22;
     private int maxLoudnessTimeIdx = 23;
     private int startLoudnessIdx = 24;
-    private int segIdx = 18;
+//    private int segIdx = 18;
     private long counter = 0;
 
-    private double startTime;
-    private String[] pitch;
-    private String[] timber;
-    private String[] maxLoudness;
-    private String[] maxLoudnessTime;
-    private String[] startLoudness;
+    /** Indices for Q9 */
+    private int tempoIdx = 14;
+    private int songKeyIdx = 8;
+    private int timeSigIdx = 15;
+    private int danceIdx = 4;
+    private int durationIdx = 5;
+    private int modeIdx = 11;
+    private int energyIdx = 7;
+    private int loudnessIdx = 10;
+    private int stopFadeIdx = 6;
+    private int startFadeIdx = 13;
+    private int hottnessIdx = 2;
+    private double hottness = 1.0;
 
-    private ArrayList<Double> resultPitch = new ArrayList<>();
-    private ArrayList<Double> resultTimber = new ArrayList<>();
-    private ArrayList<Double> resultMaxLoudness = new ArrayList<>();
-    private ArrayList<Double> resultMaxLoudnessTime = new ArrayList<>();
-    private ArrayList<Double> resultStartLoudness = new ArrayList<>();
+    private int songKey, timeSig, mode;
+    private double tempo, dance, energy, duration, loudness, stopFade, startFade;
+
+
+    private double startTime;
+
+
+    private ArrayList<Double> resultPitch = new ArrayList<>(935*12);
+    private ArrayList<Double> resultTimber = new ArrayList<>(935*12);
+    private ArrayList<Double> resultMaxLoudness = new ArrayList<>(935);
+    private ArrayList<Double> resultMaxLoudnessTime = new ArrayList<>(935);
+    private ArrayList<Double> resultStartLoudness = new ArrayList<>(935);
 
     private void addValues(ArrayList<Double>result, String[] list){
             for (int i=0; i < list.length; ++i){
@@ -87,6 +105,12 @@ public class AvgAnalysisMapper extends Mapper<LongWritable, Text, Text, Text> {
 
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+        String[] pitch;
+        String[] timber;
+        String[] maxLoudness;
+        String[] maxLoudnessTime;
+        String[] startLoudness;
+
         if (key.get() == 0l && value.toString().contains("song_id")) {
             ArrayList<String> header = new ArrayList(Arrays.asList(value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 0)));
             startTimeIdx = header.indexOf("end_of_fade_in");
@@ -95,24 +119,73 @@ public class AvgAnalysisMapper extends Mapper<LongWritable, Text, Text, Text> {
             maxLoudnessIdx = header.indexOf("segments_loudness_max");
             maxLoudnessTimeIdx = header.indexOf("segments_loudness_max_time");
             startLoudnessIdx = header.indexOf("segments_loudness_start");
-            segIdx = header.indexOf("segments_start");
-            System.out.printf("Index: staratTime=%s, pitch=%s, timber=%s, maxLoudness=%s, mlt=%s, startloud=%s, " +
-                            "seg=%s\n",
-                    startTimeIdx, pitchIdx, timberIdx, maxLoudnessIdx, maxLoudnessTimeIdx, startLoudnessIdx,segIdx);
+//            segIdx = header.indexOf("segments_start");
+//            System.out.printf("Index: staratTime=%s, pitch=%s, timber=%s, maxLoudness=%s, mlt=%s, startloud=%s, " +
+//                            "seg=%s\n",
+//                    startTimeIdx, pitchIdx, timberIdx, maxLoudnessIdx, maxLoudnessTimeIdx, startLoudnessIdx,segIdx);
 
         }else{
             counter++;
             String[] items = value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", 0);
+
+            // Data Prepration..
+            String outSongId = items[songIdx].trim();
+//            String dance = items[danceIdx].trim();
+//            String energy = items[energyIdx].trim();
+            String outLoudness = items[loudnessIdx].trim();
+            String outHotness = items[hottnessIdx].trim();
+            String endTime = items[endFadeIdx].trim();
+            String outStartFade = items[startFadeIdx].trim();
+            String outDurationTime = items[durationIdx].trim();
+            String outTempo = items[tempoIdx].trim();
+            String outMode = items[modeIdx].trim();
+            String outSongKey = items[songKeyIdx].trim();
+            String outVal = outHotness+","+outDurationTime+","+endTime+","+outSongKey+","+outLoudness+","+outMode+
+                    ","+outStartFade + ","+outTempo;
+            if ( outHotness.length() > 0) {
+                double tmpHot = Double.parseDouble(outHotness);
+                if (tmpHot > 0.0 ) {
+                    if (tmpHot > 0.5) {
+                        outVal += ",GOOD";
+                    } else {
+                        outVal += ",BAD";
+                    }
+                    context.write(new Text(outSongId), new Text("analysis#-#" + outVal));
+                }
+            }
+
+            // Start for averaging task
             startTime += Double.parseDouble(items[startTimeIdx]);
             pitch = items[pitchIdx].split("\\s+");
             timber = items[timberIdx].split("\\s+");
             maxLoudness = items[maxLoudnessIdx].split("\\s+");
             maxLoudnessTime = items[maxLoudnessTimeIdx].split("\\s+");
             startLoudness = items[startLoudnessIdx].split("\\s+");
-            String[] seg = items[segIdx].split(" ");
-            System.out.printf("Avg len: pitch=%s, timber=%s, maxloud=%s, maxloudtime=%s, startloud=%s segment=%s\n",
-                    pitch.length, timber.length, maxLoudness.length, maxLoudnessTime.length, startLoudness.length,
-                    seg.length);
+//            String[] seg = items[segIdx].split(" ");
+//            System.out.printf("Avg len: pitch=%s, timber=%s, maxloud=%s, maxloudtime=%s, startloud=%s segment=%s\n",
+//                    pitch.length, timber.length, maxLoudness.length, maxLoudnessTime.length, startLoudness.length,
+//                    seg.length);
+            String hotVal = items[hottnessIdx].trim();
+            if (hotVal.length() > 0) {
+                double hot = Double.parseDouble(hotVal);
+                if (hot == hottness) {
+//                if (hot > 0.7) {
+//                    System.out.println("HOTVal:: "+hot);
+                    songKey = Math.max(songKey, Integer.parseInt(items[songKeyIdx]));
+                    timeSig = Math.max(timeSig, Integer.parseInt(items[timeSigIdx]));
+                    mode = Math.max(mode, Integer.parseInt(items[modeIdx]));
+                    tempo = Math.max(tempo, Double.parseDouble(items[tempoIdx]));
+                    dance = Math.max(dance, Double.parseDouble(items[danceIdx]));
+                    energy = Math.max(energy, Double.parseDouble(items[energyIdx]));
+                    duration = Math.max(duration, Double.parseDouble(items[durationIdx]));
+                    loudness = Math.max(loudness, Double.parseDouble(items[loudnessIdx]));
+                    stopFade = Math.min(stopFade, Double.parseDouble(items[stopFadeIdx]));
+                    startFade = Math.max(startFade, Double.parseDouble(items[startFadeIdx]));
+                }
+            }
+
+
+
             // Do element wise addition of two results.
             addValues(resultPitch, pitch);
             addValues(resultMaxLoudness, maxLoudness);
@@ -120,10 +193,7 @@ public class AvgAnalysisMapper extends Mapper<LongWritable, Text, Text, Text> {
             addValues(resultMaxLoudnessTime, maxLoudnessTime);
             addValues(resultStartLoudness, startLoudness);
         }
-
 //        double result[] = new double[pitch.length]; //default initialize to 0.0
-
-
 
     }
 
@@ -147,6 +217,10 @@ public class AvgAnalysisMapper extends Mapper<LongWritable, Text, Text, Text> {
 
         tmp = resultStartLoudness.stream().map(Object::toString).collect(Collectors.joining(" "));
         context.write(new Text("avg"), new Text("start-loud#-#"+tmp));
+
+        context.write(new Text("avg-fake-hot"), new Text(tempo + ","+timeSig+","+dance + "," +duration+
+                                                        ","+ mode +","+energy + "," + songKey + "," +loudness+
+                                                        ","+stopFade+","+startFade));
 
     }
 
